@@ -1,0 +1,69 @@
+pipeline:
+  timezone: MDT
+  utc_offset_hours: -6
+  midnight_scrape_cron: "0 0 * * *"
+  topup_scrape_cron: "0 6 * * *"
+  email_send_cron: "0 8 * * *"
+  log_dir: /home/superman/match-intel/logs
+  always_send_email: true
+
+email:
+  recipient: hiremath09@gmail.com
+  sender: mrguntherr@gmail.com
+  subject_template: "🏏 Cricket Intelligence — {weekday}, {date} MDT"
+  smtp_host: smtp.gmail.com
+  smtp_port: 587
+
+cricket:
+  international:
+    formats:
+      - ODI
+      - T20I
+    gender:
+      - men
+      - women
+  tier1_nations:
+    - India
+    - Australia
+    - England
+    - Pakistan
+    - South Africa
+    - New Zealand
+    - West Indies
+    - Sri Lanka
+    - Bangladesh
+    - Zimbabwe
+    - Afghanistan
+    - Ireland
+  leagues:
+    mlc:
+      name: Major League Cricket
+      active_months:
+        - 6
+        - 7
+      format: MLC T20
+      teams:
+        - MI New York
+        - Los Angeles Knight Riders
+        - Seattle Orcas
+        - Washington Freedom
+        - San Francisco Unicorns
+        - Texas Super Kings
+
+mac_mini:
+  host: 10.0.0.17
+  port: 8001
+  extraction_model: mlx-community/Qwen2.5-14B-Instruct-4bit
+  analysis_model: mlx-community/Qwen2.5-14B-Instruct-4bit
+  extraction_timeout_secs: 90
+  analysis_timeout_mins: 20
+  health_check_retries: 5
+  health_check_interval_secs: 30
+
+database:
+  host: 127.0.0.1
+  port: 5432
+  name: match_intel
+  user: pipeline
+  pool_min: 2
+  pool_max: 10
