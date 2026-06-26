@@ -53,6 +53,21 @@ NATION_ALIASES = {
     "zimbabwe women": "Zimbabwe",
     "afghanistan women": "Afghanistan",
     "ireland women": "Ireland",
+    # Extra ICC tournament participants
+    "scotland": "Scotland",
+    "scotland women": "Scotland",
+    "uae": "UAE",
+    "uae women": "UAE",
+    "united arab emirates": "UAE",
+    "united arab emirates women": "UAE",
+    "thailand women": "Thailand",
+    "thailand": "Thailand",
+    "indonesia women": "Indonesia",
+    "malaysia women": "Malaysia",
+    "usa": "USA",
+    "usa women": "USA",
+    "united states": "USA",
+    "united states of america": "USA",
 }
 
 
@@ -70,9 +85,23 @@ def _normalize_team(name: str) -> str:
 
 
 def _is_tier1(team_name: str, tier1_nations: list) -> bool:
-    """Check if a team is a tier-1 nation using fuzzy matching."""
+    """Check if a team is a tier-1 nation using fuzzy matching.
+    Works for both men's and women's teams (strips 'Women' suffix)."""
+    # Check the raw name directly via alias map
+    raw_lookup = team_name.strip().lower()
+    canonical = NATION_ALIASES.get(raw_lookup)
+    if canonical and canonical in tier1_nations:
+        return True
+    # Also try stripping Women/Men suffix before normalization
     normalized = _normalize_team(team_name)
-    return normalized in tier1_nations
+    if normalized in tier1_nations:
+        return True
+    # Also check if NATION_ALIASES maps the normalized form
+    norm_lookup = normalized.lower()
+    canonical2 = NATION_ALIASES.get(norm_lookup)
+    if canonical2 and canonical2 in tier1_nations:
+        return True
+    return False
 
 
 def _api_get(endpoint: str, params: dict = None) -> dict | None:
@@ -158,8 +187,13 @@ def _parse_match_date(match_data: dict) -> date | None:
 
 def _detect_gender(match_data: dict) -> str:
     """Detect gender from match data. Defaults to 'men'."""
-    name = (match_data.get("name", "") + " " + match_data.get("series", "")).lower()
-    if "women" in name or "wodi" in name or "wt20i" in name:
+    combined = (
+        match_data.get("name", "") + " " +
+        match_data.get("series", "") + " " +
+        " ".join(t.get("name", "") for t in match_data.get("teamInfo", []))
+    ).lower()
+    # Match: "women", "women's", "wt20i", "wodi", "w t20i"
+    if any(kw in combined for kw in ["women", "women's", "womens", "wodi", "wt20i", "w t20"]):
         return "women"
     return "men"
 
@@ -218,7 +252,7 @@ def filter_international_fixtures(
         team_a = _normalize_team(team_a_raw)
         team_b = _normalize_team(team_b_raw)
 
-        if not (_is_tier1(team_a_raw, tier1_nations) and _is_tier1(team_b_raw, tier1_nations)):
+        if not (_is_tier1(team_a_raw, tier1_nations) or _is_tier1(team_b_raw, tier1_nations)):
             continue
 
         gender = _detect_gender(m)

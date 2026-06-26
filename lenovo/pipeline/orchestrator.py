@@ -6,6 +6,7 @@ from datetime import date
 from utils.logger import log
 from utils.timezone import today_mdt
 from utils.mac_mini_client import health_check
+from utils.wake_mac_mini import wake_mac_mini
 
 # Import stages
 from pipeline.stage1_fixtures import run_stage1
@@ -26,13 +27,8 @@ def get_config():
 async def run_midnight_pipeline(today: date):
     """Run midnight discovery, enrichment, and analysis (Stages 1, 2, and 3)."""
     log.info(f"================ STARTING MIDNIGHT PIPELINE FOR {today} ================")
-    
-    # Pre-check Mac Mini health before running long AI pipeline
-    log.info("Performing pre-pipeline Mac Mini AI service health check...")
-    if not health_check(retries=3, interval=10):
-        log.error("Mac Mini AI service is unreachable! Aborting midnight pipeline.")
-        sys.exit(1)
-        
+
+    # Stage 1 & 2 do NOT require the Mac Mini — always run them regardless
     log.info("Stage 1: Running fixture discovery...")
     stage1_ok = run_stage1(today)
     if not stage1_ok:
@@ -42,6 +38,15 @@ async def run_midnight_pipeline(today: date):
     stage2_ok = run_stage2(today)
     if not stage2_ok:
         log.warning("Stage 2 deep enrichment reported issues, continuing pipeline...")
+
+    # Stage 3 requires the Mac Mini — wake it up first via Wake-on-LAN if needed
+    log.info("Waking up Mac Mini via Wake-on-LAN before AI analysis...")
+    mac_awake = wake_mac_mini()
+    if not mac_awake:
+        log.error("Mac Mini did not respond after WoL attempt — skipping Stage 3 (AI analysis) for today.")
+        log.info("Fixtures and enrichment data are saved. Analysis will run on next successful wake.")
+        log.info(f"================ MIDNIGHT PIPELINE COMPLETE (no AI) FOR {today} ================")
+        return
 
     log.info("Stage 3: Running AI analysis...")
     stage3_ok = await run_stage3(today)

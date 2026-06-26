@@ -20,6 +20,16 @@ TIER1_NATIONS = _cfg["cricket"]["tier1_nations"]
 MLC_TEAMS = _cfg["cricket"]["leagues"]["mlc"]["teams"]
 MLC_ACTIVE_MONTHS = _cfg["cricket"]["leagues"]["mlc"].get("active_months", [7])
 
+# Major ICC tournament keywords to search for via series search
+ICC_TOURNAMENT_KEYWORDS = [
+    "ICC Women's T20 World Cup",
+    "ICC Men's T20 World Cup",
+    "ICC Women's Cricket World Cup",
+    "ICC Cricket World Cup",
+    "ICC Champions Trophy",
+    "ICC World Test Championship",
+]
+
 
 def run_stage1(today: date) -> bool:
     """
@@ -79,6 +89,30 @@ def run_stage1(today: date) -> bool:
                                 all_matches.append(m)
             except Exception as e:
                 log.error(f"Failed to fetch MLC series matches: {e}")
+
+        # Fetch ICC tournament matches (Women's T20 WC, Men's T20 WC, etc.)
+        log.info("Searching for active ICC tournament series...")
+        for keyword in ICC_TOURNAMENT_KEYWORDS:
+            try:
+                series_list = search_series(keyword)
+                for s in series_list:
+                    sname = s.get("name", "")
+                    if str(today.year) in sname:
+                        s_id = s.get("id")
+                        log.info(f"Found ICC series: '{sname}' (ID: {s_id})")
+                        series_data = get_series_info(s_id)
+                        if series_data and "matchList" in series_data:
+                            icc_raw = series_data["matchList"]
+                            log.info(f"  Retrieved {len(icc_raw)} matches from '{sname}'")
+                            for m in icc_raw:
+                                mid = m.get("id", "")
+                                if mid and mid not in seen_ids:
+                                    seen_ids.add(mid)
+                                    all_matches.append(m)
+                                elif not mid:
+                                    all_matches.append(m)
+            except Exception as e:
+                log.error(f"Failed to fetch ICC series '{keyword}': {e}")
 
         log.info(f"Combined {len(all_matches)} unique matches to filter")
 
