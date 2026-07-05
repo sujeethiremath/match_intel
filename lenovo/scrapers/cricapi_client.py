@@ -3,14 +3,14 @@ import httpx
 from datetime import date, datetime, timezone
 from dotenv import load_dotenv
 from utils.logger import log
-from utils.timezone import determine_match_status
+from utils.timezone import determine_match_status, MDT
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 load_dotenv(os.path.join(BASE_DIR, ".env"))
 
 CRICAPI_KEY = os.getenv("CRICAPI_KEY", "")
 BASE_URL = "https://api.cricapi.com/v1"
-REQUEST_TIMEOUT = 30.0
+REQUEST_TIMEOUT = None  # No timeout — CricAPI takes as long as it needs
 
 # Fuzzy name map for tier1 nations
 NATION_ALIASES = {
@@ -175,14 +175,29 @@ def search_series(search_query: str) -> list:
 
 
 def _parse_match_date(match_data: dict) -> date | None:
-    """Parse date from CricAPI match data."""
-    date_str = match_data.get("date") or match_data.get("dateTimeGMT", "")[:10]
-    if not date_str:
-        return None
-    try:
-        return datetime.strptime(date_str[:10], "%Y-%m-%d").date()
-    except (ValueError, TypeError):
-        return None
+    """Parse date from CricAPI match data converted to local MDT date."""
+    datetime_gmt = match_data.get("dateTimeGMT")
+    if datetime_gmt:
+        try:
+            # format could be '2026-07-05T01:30:00' or '2026-07-05 01:30:00'
+            gmt_str = str(datetime_gmt).strip().replace("T", " ")
+            if gmt_str.endswith("Z"):
+                gmt_str = gmt_str[:-1]
+            dt_utc = datetime.strptime(gmt_str, "%Y-%m-%d %H:%M:%S")
+            dt_utc = dt_utc.replace(tzinfo=timezone.utc)
+            # Convert to MDT and return local date
+            return dt_utc.astimezone(MDT).date()
+        except Exception as e:
+            log.warning(f"Failed to parse dateTimeGMT '{datetime_gmt}': {e}")
+
+    # Fallback to date field (usually UTC date string 'YYYY-MM-DD')
+    date_str = match_data.get("date")
+    if date_str:
+        try:
+            return datetime.strptime(date_str[:10], "%Y-%m-%d").date()
+        except (ValueError, TypeError):
+            pass
+    return None
 
 
 def _detect_gender(match_data: dict) -> str:

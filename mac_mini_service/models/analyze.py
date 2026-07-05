@@ -45,5 +45,12 @@ class AnalysisResponse(BaseModel):
     weather_note: Optional[str] = None
     predicted_winner: Optional[str] = None
     pick_reasoning: Optional[str] = None
+    win_probability_a: Optional[int] = None   # e.g. 65 (percent)
+    win_probability_b: Optional[int] = None   # e.g. 35 (percent)
+    full_report: Optional[str] = None         # Full 11-section markdown report
     model_used: Optional[str] = None
+    toss_prediction: Optional[str] = None
+    predicted_margin: Optional[str] = None
+    confidence_level: Optional[str] = None
+    man_of_match_prediction: Optional[str] = None
     error: Optional[str] = None

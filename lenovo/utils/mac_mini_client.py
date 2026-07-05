@@ -13,8 +13,8 @@ with open(os.path.join(BASE_DIR, "config.yaml"), "r") as f:
 
 MAC_HOST = os.getenv("MAC_MINI_HOST", _cfg["mac_mini"]["host"])
 MAC_PORT = int(os.getenv("MAC_MINI_PORT", _cfg["mac_mini"]["port"]))
-EXTRACTION_TIMEOUT = _cfg["mac_mini"].get("extraction_timeout_secs", 90)
-ANALYSIS_TIMEOUT_MINS = _cfg["mac_mini"].get("analysis_timeout_mins", 20)
+EXTRACTION_TIMEOUT = None   # No timeout — let the model take as long as it needs
+ANALYSIS_TIMEOUT = None     # No timeout — deep analysis can run for hours if needed
 HEALTH_RETRIES = _cfg["mac_mini"].get("health_check_retries", 5)
 HEALTH_INTERVAL = _cfg["mac_mini"].get("health_check_interval_secs", 30)
 EXTRACTION_MODEL = _cfg["mac_mini"].get("extraction_model", "mlx-community/Qwen2.5-14B-Instruct-4bit")
@@ -33,7 +33,7 @@ def health_check(retries: int = None, interval: int = None) -> bool:
 
     for attempt in range(1, retries + 1):
         try:
-            with httpx.Client(timeout=10.0) as client:
+            with httpx.Client(timeout=30.0) as client:  # health check: 30s is plenty
                 resp = client.get(f"{BASE_URL}/health")
                 if resp.status_code == 200:
                     log.info(f"Mac Mini health check passed (attempt {attempt})")
@@ -57,20 +57,8 @@ def extract(extraction_type: str, sport_context: str, raw_text: str,
             team_a: str, team_b: str, timeout_secs: int = None) -> dict | None:
     """
     Call Mac Mini /extract endpoint to extract structured data from raw text.
-    
-    Args:
-        extraction_type: e.g. 'h2h', 'team_form', 'venue_stats', 'injury_news', etc.
-        sport_context: e.g. 'cricket ODI men'
-        raw_text: The raw text content to extract from
-        team_a: First team name
-        team_b: Second team name
-        timeout_secs: Override default timeout
-    
-    Returns:
-        Extracted dict or None on failure
+    No timeout — the LLM takes as long as it needs for quality output.
     """
-    timeout_secs = timeout_secs or EXTRACTION_TIMEOUT
-
     payload = {
         "extraction_type": extraction_type,
         "sport_context": sport_context,
@@ -81,14 +69,15 @@ def extract(extraction_type: str, sport_context: str, raw_text: str,
     }
 
     try:
-        with httpx.Client(timeout=httpx.Timeout(timeout_secs, connect=15.0)) as client:
+        # timeout=None means wait forever — no cap on processing time
+        with httpx.Client(timeout=None) as client:
             resp = client.post(f"{BASE_URL}/extract", json=payload)
             resp.raise_for_status()
             data = resp.json()
             log.debug(f"Extraction [{extraction_type}] succeeded for {team_a} vs {team_b}")
             return data.get("result", data)
-    except httpx.TimeoutException:
-        log.error(f"Extraction [{extraction_type}] timed out after {timeout_secs}s")
+    except httpx.ConnectError:
+        log.error(f"Extraction [{extraction_type}] connection error — Mac Mini unreachable")
         return None
     except httpx.HTTPStatusError as e:
         log.error(f"Extraction [{extraction_type}] HTTP error: {e.response.status_code}")
@@ -101,28 +90,20 @@ def extract(extraction_type: str, sport_context: str, raw_text: str,
 def analyze(payload_dict: dict, timeout_mins: int = None) -> dict | None:
     """
     Call Mac Mini /analyze endpoint to generate full match analysis.
-    
-    Args:
-        payload_dict: Full match data payload for analysis
-        timeout_mins: Override default timeout in minutes
-    
-    Returns:
-        Analysis result dict or None on failure
+    No timeout — the expert 11-section analysis takes as long as needed.
     """
-    timeout_mins = timeout_mins or ANALYSIS_TIMEOUT_MINS
-    timeout_secs = timeout_mins * 60
-
     payload_dict["model"] = ANALYSIS_MODEL
 
     try:
-        with httpx.Client(timeout=httpx.Timeout(timeout_secs, connect=15.0)) as client:
+        # timeout=None means wait forever — quality over speed
+        with httpx.Client(timeout=None) as client:
             resp = client.post(f"{BASE_URL}/analyze", json=payload_dict)
             resp.raise_for_status()
             data = resp.json()
             log.info("Analysis call succeeded")
             return data.get("result", data)
-    except httpx.TimeoutException:
-        log.error(f"Analysis timed out after {timeout_mins} minutes")
+    except httpx.ConnectError:
+        log.error("Analysis connection error — Mac Mini unreachable")
         return None
     except httpx.HTTPStatusError as e:
         log.error(f"Analysis HTTP error: {e.response.status_code} — {e.response.text[:300]}")

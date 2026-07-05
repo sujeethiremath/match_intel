@@ -55,8 +55,7 @@ mac_mini:
   port: 8001
   extraction_model: mlx-community/Qwen2.5-14B-Instruct-4bit
   analysis_model: mlx-community/Qwen2.5-14B-Instruct-4bit
-  extraction_timeout_secs: 90
-  analysis_timeout_mins: 20
+  # No timeouts — let the model take as long as needed for quality output
   health_check_retries: 5
   health_check_interval_secs: 30
 

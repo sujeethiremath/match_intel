@@ -100,6 +100,13 @@ async def run_stage3(today: date) -> bool:
                     weather_note=result.get("weather_note"),
                     predicted_winner=result.get("predicted_winner"),
                     pick_reasoning=result.get("pick_reasoning"),
+                    full_report=result.get("full_report"),
+                    win_probability_a=result.get("win_probability_a"),
+                    win_probability_b=result.get("win_probability_b"),
+                    toss_prediction=result.get("toss_prediction"),
+                    predicted_margin=result.get("predicted_margin"),
+                    confidence_level=result.get("confidence_level"),
+                    man_of_match_prediction=result.get("man_of_match_prediction"),
                 )
                 log.info(f"Successfully saved AI analysis for Match {mid}: {team_a} vs {team_b}")
                 matches_processed += 1
