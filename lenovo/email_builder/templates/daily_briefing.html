@@ -1,147 +1,105 @@
 {% macro match_card(m, idx) %}
 {% set fmt = m.match_format | upper %}
-{% if 'ODI' in fmt %}{% set badge_class = 'badge-odi' %}
-{% elif 'MLC' in fmt %}{% set badge_class = 'badge-mlc' %}
-{% elif 'TEST' in fmt %}{% set badge_class = 'badge-test' %}
-{% else %}{% set badge_class = 'badge-t20' %}{% endif %}
-
 {% set prob_a = m.win_probability_a or 50 %}
 {% set prob_b = m.win_probability_b or 50 %}
 
-<div class="match-card" id="match-{{ m.id }}">
-
-  <!-- MATCH HEADER -->
-  <div class="match-header">
-    <span class="match-format-badge {{ badge_class }}">{{ m.match_format }}</span>
-    <div class="matchup">
-      <div class="team-block">
-        <div class="team-flag">{{ m.flag_a }}</div>
-        <div class="team-name">{{ m.team_a }}</div>
-      </div>
-      <div class="vs-block">VS</div>
-      <div class="team-block">
-        <div class="team-flag">{{ m.flag_b }}</div>
-        <div class="team-name">{{ m.team_b }}</div>
-      </div>
-    </div>
-    <div class="match-meta">
-      {% if m.competition %}<span>🏆 {{ m.competition }}</span>{% endif %}
-      {% if m.venue %}<span>📍 {{ m.venue }}</span>{% endif %}
-      {% if m.match_time_local %}<span>🕐 {{ m.match_time_local }}</span>{% endif %}
-      <span>📊 {{ m.match_status }}</span>
-    </div>
+<div class="typewriter-card" id="match-{{ m.id }}">
+  <!-- MATCH TITLE -->
+  <div class="match-title">
+    [{{ fmt }}] {{ m.team_a | upper }} vs {{ m.team_b | upper }}
   </div>
+  
+  <div class="divider">- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -</div>
+
+  <table class="meta-table">
+    {% if m.competition %}
+    <tr>
+      <td class="meta-label">COMPETITION:</td>
+      <td class="meta-value">{{ m.competition | upper }}</td>
+    </tr>
+    {% endif %}
+    {% if m.venue %}
+    <tr>
+      <td class="meta-label">VENUE:</td>
+      <td class="meta-value">{{ m.venue | upper }}</td>
+    </tr>
+    {% endif %}
+    {% if m.match_time_local %}
+    <tr>
+      <td class="meta-label">KICK-OFF:</td>
+      <td class="meta-value">{{ m.match_time_local | upper }}</td>
+    </tr>
+    {% endif %}
+    <tr>
+      <td class="meta-label">STATUS:</td>
+      <td class="meta-value">{{ m.match_status | upper }}</td>
+    </tr>
+  </table>
 
   {% if m.analysis_complete %}
-
-  <!-- SUMMARY CARD -->
-  <div class="summary-card">
-    <div class="summary-item">
-      <div class="summary-label">🎯 Our Pick</div>
-      <div class="summary-value" style="color:#34d399;">
-        {% if m.predicted_winner %}{{ m.predicted_winner }}{% else %}TBD{% endif %}
-      </div>
-      <div class="summary-sub">
-        {% if m.predicted_winner == m.team_a %}{{ prob_a }}%{% else %}{{ prob_b }}%{% endif %} confidence
-      </div>
-    </div>
-    <div class="summary-item">
-      <div class="summary-label">📈 Confidence</div>
-      <div class="summary-value" style="color:#fbbf24;">
-        {{ m.confidence_level or 'Medium' }}
-      </div>
-      <div class="summary-sub">Overall assessment</div>
-    </div>
-    <div class="summary-item">
-      <div class="summary-label">🏆 Margin</div>
-      <div class="summary-value" style="font-size:12px;">
-        {{ m.predicted_margin or 'Competitive' }}
-      </div>
-      <div class="summary-sub">Predicted result</div>
-    </div>
+  <div class="divider">- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -</div>
+  
+  <div class="pick-section">
+    <span class="red-ribbon">🎯 ANALYST'S PICK:</span> <strong style="color: #b91c1c;">{{ m.predicted_winner | upper }} TO WIN</strong>
+    {% if m.pick_reasoning %}
+    <p class="pick-reason">"{{ m.pick_reasoning }}"</p>
+    {% endif %}
   </div>
 
-  <!-- WIN PROBABILITY BAR -->
-  <div class="prob-section">
-    <div class="prob-label">⚡ Win Probability</div>
-    <div class="prob-bar-wrap">
-      <div class="prob-team-a">{{ m.flag_a }} {{ m.team_a }}<br><span style="color:#818cf8; font-weight:bold;">{{ prob_a }}%</span></div>
-      <div class="prob-bar">
-        <div class="prob-fill-a" style="width:{{ prob_a }}%;"></div>
-        <div class="prob-fill-b" style="width:{{ prob_b }}%;"></div>
-      </div>
-      <div class="prob-team-b">{{ m.flag_b }} {{ m.team_b }}<br><span style="color:#34d399; font-weight:bold;">{{ prob_b }}%</span></div>
-    </div>
-  </div>
+  <table class="stats-table">
+    <tr>
+      <td class="stat-label">WIN PROBABILITY....:</td>
+      <td class="stat-value">
+        {{ m.team_a | upper }}: {{ prob_a }}% | {{ m.team_b | upper }}: {{ prob_b }}%
+      </td>
+    </tr>
+    <tr>
+      <td class="stat-label">CONFIDENCE LEVEL...:</td>
+      <td class="stat-value">{{ (m.confidence_level or 'MEDIUM') | upper }}</td>
+    </tr>
+    <tr>
+      <td class="stat-label">PREDICTED MARGIN...:</td>
+      <td class="stat-value">{{ (m.predicted_margin or 'COMPETITIVE') | upper }}</td>
+    </tr>
+    <tr>
+      <td class="stat-label">TOSS PREDICTION....:</td>
+      <td class="stat-value">{{ (m.toss_prediction or '—') | upper }}</td>
+    </tr>
+    <tr>
+      <td class="stat-label">MAN OF MATCH.......:</td>
+      <td class="stat-value">{{ (m.man_of_match_prediction or '—') | upper }}</td>
+    </tr>
+  </table>
 
-  <!-- PICK BANNER -->
-  {% if m.predicted_winner %}
-  <div class="pick-banner">
-    <div class="pick-icon">🎯</div>
-    <div class="pick-body">
-      <div class="pick-label">Analyst's Pick</div>
-      <div class="pick-winner">{{ m.predicted_winner }} to win</div>
-      {% if m.pick_reasoning %}
-      <div class="pick-reason">{{ m.pick_reasoning }}</div>
-      {% endif %}
-    </div>
-  </div>
-  {% endif %}
-
-  <!-- QUICK STATS -->
-  <div class="quick-stats">
-    <div class="qs-item">
-      <div class="qs-label">🪙 Toss Tip</div>
-      <div class="qs-value" style="font-size:11px;">{{ m.toss_prediction or '—' }}</div>
-    </div>
-    <div class="qs-item">
-      <div class="qs-label">🌟 Man of Match</div>
-      <div class="qs-value" style="font-size:11px;">{{ m.man_of_match_prediction or '—' }}</div>
-    </div>
-    <div class="qs-item">
-      <div class="qs-label">📍 Venue</div>
-      <div class="qs-value" style="font-size:11px;">{{ (m.venue or 'TBD')[:22] }}</div>
-    </div>
-    <div class="qs-item">
-      <div class="qs-label">⏰ Kick-off</div>
-      <div class="qs-value" style="font-size:11px;">{{ m.match_time_local or 'TBD' }}</div>
-    </div>
-  </div>
-
-  <!-- KEY DECIDERS -->
   {% if m.key_decider_factors %}
-  <div class="deciders-section">
-    <div class="section-title">⚔️ Key Decider Factors</div>
+  <div class="deciders-box">
+    <div class="deciders-title">KEY DECIDER FACTORS:</div>
     {% for factor in m.key_decider_factors %}
     <div class="decider-item">
-      <div class="decider-num">{{ loop.index }}</div>
-      <div class="decider-text">{{ factor }}</div>
+      {{ loop.index }}. {{ factor | upper }}
     </div>
     {% endfor %}
   </div>
   {% endif %}
 
-  <!-- FULL REPORT (Collapsible) -->
   {% if m.full_report %}
-  <div class="full-report-section">
+  <div class="report-box">
     <button class="report-toggle" onclick="toggleReport(this)">
-      <span>📋 View Full Analyst Report (11 Sections)</span>
-      <span class="arrow">▼</span>
+      [+] VIEW FULL TYPED ANALYST REPORT (11 SECTIONS)
     </button>
     <div class="report-body">
       <div class="report-content">
-        {{ m.full_report | replace('\n## ', '\n<h2>') | replace('\n### ', '\n<h3>') | replace('\n- ', '\n<li>') | replace('\n**', '\n<strong>') | replace('**\n', '</strong>\n') | replace('\n', '<br>') | safe }}
+        {{ m.full_report | replace('\n## ', '\n\n**') | replace('\n### ', '\n\n*') | replace('\n- ', '\n• ') | replace('\n', '<br>') | safe }}
       </div>
     </div>
   </div>
   {% endif %}
 
   {% else %}
-  <div style="padding:24px;text-align:center;color:#475569;font-size:13px;">
-    ⏳ AI analysis pending for this match
+  <div class="pending-analysis">
+    [ ANALYSIS PENDING FOR THIS REPORT ]
   </div>
   {% endif %}
-
 </div>
 {% endmacro %}
 
@@ -154,227 +112,244 @@
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
-    background-color: #0d0f14;
-    color: #e2e8f0;
-    line-height: 1.6;
+    font-family: 'Courier New', Courier, monospace;
+    background-color: #e8e6df; /* warm desk color */
+    color: #1a1a1a;
+    line-height: 1.5;
     padding: 20px;
   }
-  .wrapper { max-width: 800px; margin: 0 auto; }
-
-  /* ── HEADER ── */
-  .header {
-    background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%);
-    border: 1px solid #312e81;
-    border-radius: 16px;
-    padding: 40px 24px;
-    text-align: center;
-    margin-bottom: 28px;
+  .wrapper {
+    max-width: 700px;
+    margin: 0 auto;
+    background-color: #fbf9f5; /* clean typewriter paper */
+    border: 1px solid #c2c0b8;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+    padding: 40px;
+    border-radius: 2px;
   }
-  .header h1 { font-size: 30px; color: #ffffff; font-weight: 900; margin-bottom: 6px; letter-spacing: -0.5px; }
-  .header .subtitle { color: #a5b4fc; font-size: 14px; letter-spacing: 0.8px; }
-  .header .date-badge {
-    display: inline-block;
-    background: rgba(99, 102, 241, 0.2);
-    color: #a5b4fc;
-    padding: 7px 20px;
-    border-radius: 20px;
-    font-size: 13px;
-    font-weight: 700;
-    margin-top: 14px;
-    border: 1px solid #4338ca;
+  
+  /* ── TYPEWRITER HEADER ── */
+  .typewriter-header {
+    margin-bottom: 30px;
   }
-
-  /* ── MATCH CARD ── */
-  .match-card {
-    background: #111827;
-    border: 1px solid #1e293b;
-    border-radius: 16px;
-    margin-bottom: 32px;
-    overflow: hidden;
+  .header-line {
+    font-weight: bold;
+    font-size: 14px;
   }
-
-  /* ── MATCH HEADER ── */
-  .match-header {
-    background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
-    padding: 24px;
-    border-bottom: 1px solid #1e293b;
-    text-align: center;
+  .double-divider {
+    font-weight: bold;
+    margin: 10px 0;
   }
-  .match-format-badge {
-    display: inline-block;
-    padding: 4px 14px;
-    border-radius: 20px;
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 1px;
+  
+  /* ── SECTIONS ── */
+  .typewriter-section-header {
+    font-size: 15px;
+    font-weight: bold;
+    margin: 35px 0 15px;
     text-transform: uppercase;
-    margin-bottom: 14px;
+    color: #1a1a1a;
+    border-bottom: 2px double #1a1a1a;
+    padding-bottom: 5px;
   }
-  .badge-t20  { background: rgba(16,185,129,0.2); color: #34d399; border: 1px solid #065f46; }
-  .badge-odi  { background: rgba(59,130,246,0.2); color: #60a5fa; border: 1px solid #1e3a5f; }
-  .badge-test { background: rgba(245,158,11,0.2); color: #fbbf24; border: 1px solid #78350f; }
-  .badge-mlc  { background: rgba(239,68,68,0.2);  color: #f87171; border: 1px solid #7f1d1d; }
-
-  .matchup { display: flex; align-items: center; justify-content: center; gap: 16px; flex-wrap: wrap; }
-  .team-block { text-align: center; flex: 1; min-width: 100px; }
-  .team-flag  { font-size: 40px; margin-bottom: 6px; }
-  .team-name  { font-size: 16px; font-weight: 800; color: #f1f5f9; }
-  .vs-block   { font-size: 22px; font-weight: 900; color: #475569; padding: 0 8px; }
-
-  .match-meta {
-    margin-top: 14px; font-size: 12px; color: #64748b;
-    display: flex; justify-content: center; gap: 16px; flex-wrap: wrap;
+  
+  /* ── CARDS ── */
+  .typewriter-card {
+    border: 1px dashed #7f7f7f;
+    padding: 20px;
+    margin-bottom: 30px;
+    background-color: #faf8f4;
   }
-  .match-meta span { display: flex; align-items: center; gap: 4px; }
-
-  /* ── SUMMARY CARD ── */
-  .summary-card { display: grid; grid-template-columns: 1fr 1fr 1fr; border-bottom: 1px solid #1e293b; }
-  .summary-item { padding: 18px 16px; text-align: center; border-right: 1px solid #1e293b; }
-  .summary-item:last-child { border-right: none; }
-  .summary-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1.2px; color: #64748b; font-weight: 700; margin-bottom: 6px; }
-  .summary-value { font-size: 16px; font-weight: 800; color: #f1f5f9; }
-  .summary-sub   { font-size: 11px; color: #94a3b8; margin-top: 3px; }
-
-  /* ── WIN PROBABILITY BAR ── */
-  .prob-section { padding: 18px 24px; border-bottom: 1px solid #1e293b; }
-  .prob-label { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: #64748b; font-weight: 700; margin-bottom: 10px; text-align: center; }
-  .prob-bar-wrap { display: flex; align-items: center; gap: 10px; }
-  .prob-team-a { font-size: 12px; font-weight: 700; color: #818cf8; white-space: nowrap; min-width: 90px; text-align: right; }
-  .prob-team-b { font-size: 12px; font-weight: 700; color: #34d399; white-space: nowrap; min-width: 90px; text-align: left; }
-  .prob-bar { flex: 1; height: 12px; background: #1e293b; border-radius: 6px; overflow: hidden; display: flex; }
-  .prob-fill-a { background: linear-gradient(90deg, #6366f1, #818cf8); height: 100%; }
-  .prob-fill-b { background: linear-gradient(90deg, #10b981, #34d399); height: 100%; }
-
-  /* ── PICK BANNER ── */
-  .pick-banner {
-    background: linear-gradient(135deg, rgba(16,185,129,0.12) 0%, rgba(5,150,105,0.06) 100%);
-    border-bottom: 1px solid #065f46;
-    padding: 16px 24px;
-    display: flex; align-items: flex-start; gap: 14px;
+  .match-title {
+    font-size: 15px;
+    font-weight: bold;
+    text-transform: uppercase;
   }
-  .pick-icon  { font-size: 28px; flex-shrink: 0; }
-  .pick-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1.2px; color: #6ee7b7; font-weight: 700; margin-bottom: 3px; }
-  .pick-winner { font-size: 17px; font-weight: 900; color: #34d399; margin-bottom: 4px; }
-  .pick-reason { font-size: 13px; color: #94a3b8; line-height: 1.5; }
-
-  /* ── QUICK STATS ── */
-  .quick-stats { display: grid; grid-template-columns: repeat(4, 1fr); border-bottom: 1px solid #1e293b; }
-  .qs-item { padding: 14px 12px; text-align: center; border-right: 1px solid #1e293b; }
-  .qs-item:last-child { border-right: none; }
-  .qs-label { font-size: 9px; text-transform: uppercase; letter-spacing: 1px; color: #64748b; font-weight: 700; margin-bottom: 5px; }
-  .qs-value { font-size: 12px; font-weight: 700; color: #e2e8f0; }
-
-  /* ── KEY DECIDERS ── */
-  .deciders-section { padding: 20px 24px; border-bottom: 1px solid #1e293b; }
-  .section-title {
-    font-size: 11px; text-transform: uppercase; letter-spacing: 1.2px;
-    color: #94a3b8; font-weight: 700; margin-bottom: 12px;
-    display: flex; align-items: center; gap: 8px;
+  .divider {
+    margin: 15px 0;
+    color: #7f7f7f;
   }
-  .section-title::after { content: ''; flex: 1; height: 1px; background: #1e293b; }
-  .decider-item { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 8px; }
-  .decider-num {
-    width: 22px; height: 22px; border-radius: 50%;
-    background: rgba(99,102,241,0.2); color: #818cf8;
-    font-size: 11px; font-weight: 800;
-    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  .red-ribbon {
+    color: #b91c1c;
+    font-weight: bold;
   }
-  .decider-text { font-size: 13px; color: #cbd5e1; line-height: 1.5; }
-
-  /* ── FULL REPORT ── */
+  
+  /* ── TABLES ── */
+  .meta-table, .stats-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 15px;
+  }
+  .meta-table td, .stats-table td {
+    padding: 4px 0;
+    font-size: 13px;
+    vertical-align: top;
+  }
+  .meta-label {
+    width: 120px;
+    font-weight: bold;
+    color: #555555;
+  }
+  .meta-value {
+    color: #1a1a1a;
+  }
+  .stat-label {
+    width: 200px;
+    font-weight: bold;
+    color: #333333;
+  }
+  .stat-value {
+    color: #1a1a1a;
+  }
+  
+  .pick-section {
+    margin-bottom: 15px;
+    background: #fbf0f0;
+    border-left: 3px solid #b91c1c;
+    padding: 10px 15px;
+  }
+  .pick-reason {
+    margin-top: 5px;
+    font-style: italic;
+    color: #444444;
+  }
+  
+  /* ── DECIDERS ── */
+  .deciders-box {
+    margin-top: 15px;
+    padding: 10px 15px;
+    border: 1px solid #7f7f7f;
+    background-color: #f7f6f0;
+  }
+  .deciders-title {
+    font-weight: bold;
+    margin-bottom: 8px;
+    font-size: 13px;
+  }
+  .decider-item {
+    font-size: 12px;
+    margin-bottom: 6px;
+    line-height: 1.4;
+  }
+  
+  /* ── REPORT TOGGLE ── */
+  .report-box {
+    margin-top: 20px;
+  }
   .report-toggle {
-    width: 100%; background: #0f172a; border: none; border-top: 1px solid #1e293b;
-    padding: 16px 24px; text-align: left; cursor: pointer;
-    display: flex; align-items: center; justify-content: space-between;
-    color: #818cf8; font-size: 13px; font-weight: 700;
+    background: none;
+    border: 1px solid #1a1a1a;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 12px;
+    font-weight: bold;
+    padding: 8px 12px;
+    cursor: pointer;
+    width: 100%;
+    text-align: left;
   }
-  .report-toggle:hover { background: #111827; }
-  .report-body { padding: 24px; display: none; border-top: 1px solid #1e293b; }
-  .report-body.open { display: block; }
-  .report-content h2 {
-    font-size: 13px; font-weight: 800; color: #818cf8;
-    text-transform: uppercase; letter-spacing: 0.8px;
-    margin: 20px 0 10px; padding-bottom: 6px;
-    border-bottom: 1px solid #1e293b;
+  .report-toggle:hover {
+    background-color: #eaeaea;
   }
-  .report-content h2:first-child { margin-top: 0; }
-  .report-content h3 { font-size: 13px; font-weight: 700; color: #60a5fa; margin: 14px 0 8px; }
-  .report-content p { font-size: 13px; color: #94a3b8; margin-bottom: 10px; line-height: 1.7; }
-  .report-content ul { padding-left: 18px; margin-bottom: 10px; }
-  .report-content li { font-size: 13px; color: #94a3b8; margin-bottom: 4px; line-height: 1.6; }
-  .report-content strong { color: #e2e8f0; font-weight: 700; }
-
-  /* ── SECTION DIVIDERS ── */
-  .sport-section-header {
-    padding: 8px 0 14px; font-size: 11px; text-transform: uppercase;
-    letter-spacing: 1.5px; color: #475569; font-weight: 700;
-    display: flex; align-items: center; gap: 10px;
+  .report-body {
+    display: none;
+    border: 1px solid #1a1a1a;
+    border-top: none;
+    padding: 20px;
+    background-color: #ffffff;
   }
-  .sport-section-header::before,
-  .sport-section-header::after { content: ''; flex: 1; height: 1px; background: #1e293b; }
-
-  .no-matches { text-align: center; padding: 48px 24px; color: #475569; font-size: 14px; }
-  .footer { text-align: center; padding: 28px; color: #475569; font-size: 12px; margin-top: 8px; }
-
-  @media (max-width: 560px) {
-    .summary-card { grid-template-columns: 1fr 1fr; }
-    .quick-stats  { grid-template-columns: 1fr 1fr; }
-    .summary-item:nth-child(2) { border-right: none; }
-    .qs-item:nth-child(2) { border-right: none; }
-    .prob-bar-wrap { flex-direction: column; }
+  .report-body.open {
+    display: block;
+  }
+  .report-content {
+    font-size: 12px;
+    color: #222222;
+    line-height: 1.6;
+  }
+  
+  .pending-analysis {
+    text-align: center;
+    padding: 15px;
+    font-style: italic;
+    color: #666666;
+  }
+  
+  .no-matches {
+    text-align: center;
+    padding: 40px 20px;
+  }
+  .footer {
+    margin-top: 40px;
+    border-top: 2px double #1a1a1a;
+    padding-top: 20px;
+    font-size: 11px;
+    color: #666666;
+    text-align: center;
   }
 </style>
 </head>
 <body>
 <div class="wrapper">
 
-  <div class="header">
-    <div style="font-size:36px;margin-bottom:10px;">🏏</div>
-    <h1>Cricket Intelligence Briefing</h1>
-    <div class="subtitle">POWERED BY AI · MATCH INTEL PIPELINE</div>
-    <div class="date-badge">{{ weekday }}, {{ date }} · Generated {{ generated_at }}</div>
+  <!-- TYPEWRITER PAGE HEADER -->
+  <div class="typewriter-header">
+    <div class="header-line">MATCH INTEL BRIEFING SYSTEM</div>
+    <div class="header-line">REPORT ID: #CRIC-INTEL-{{ date | replace('-', '') }}</div>
+    <div class="double-divider">======================================================================</div>
+    <table style="width:100%; border-collapse:collapse; font-size:13px;">
+      <tr>
+        <td style="font-weight:bold; width:100px;">DATE:</td>
+        <td>{{ weekday | upper }}, {{ date }}</td>
+      </tr>
+      <tr>
+        <td style="font-weight:bold;">GENERATED:</td>
+        <td>{{ generated_at }} MDT</td>
+      </tr>
+      <tr>
+        <td style="font-weight:bold;">SOURCE:</td>
+        <td>QWEN2.5-14B ANALYST ENGINE</td>
+      </tr>
+    </table>
+    <div class="double-divider">======================================================================</div>
   </div>
 
   {% set all_matches = international_men + international_women + mlc_matches %}
 
   {% if not all_matches %}
   <div class="no-matches">
-    <div style="font-size:48px;margin-bottom:16px;">📭</div>
-    <p>No matches scheduled for today.<br>Check back tomorrow!</p>
+    <p>[ NO MATCHES SCHEDULED FOR TODAY'S PLAY DATE ]</p>
+    <p style="margin-top: 10px;">Check back tomorrow for the next briefing report.</p>
   </div>
   {% else %}
 
   {% if international_women %}
-  <div class="sport-section-header">🌸 Women's International Cricket</div>
+  <div class="typewriter-section-header">SECTION I: WOMEN'S INTERNATIONAL FIXTURES</div>
   {% for m in international_women %}{{ match_card(m, loop.index) }}{% endfor %}
   {% endif %}
 
   {% if international_men %}
-  <div class="sport-section-header">🌍 Men's International Cricket</div>
+  <div class="typewriter-section-header">SECTION II: MEN'S INTERNATIONAL FIXTURES</div>
   {% for m in international_men %}{{ match_card(m, loop.index) }}{% endfor %}
   {% endif %}
 
   {% if show_mlc and mlc_matches %}
-  <div class="sport-section-header">🇺🇸 Major League Cricket</div>
+  <div class="typewriter-section-header">SECTION III: MAJOR LEAGUE CRICKET FIXTURES</div>
   {% for m in mlc_matches %}{{ match_card(m, loop.index) }}{% endfor %}
   {% endif %}
 
   {% endif %}
 
+  <!-- FOOTER -->
   <div class="footer">
-    <p>🤖 Analysis by Qwen2.5-14B on Mac Mini M4 · {{ total_matches }} match{{ 'es' if total_matches != 1 else '' }} today</p>
-    <p style="margin-top:6px;">Match Intel · Your personal cricket intelligence system</p>
+    <p>[ END OF BRIEFING REPORT — MATCH INTEL PIPELINE ]</p>
+    <p style="margin-top: 6px; font-size: 9px;">Total matches processed: {{ total_matches }} | Local timezone: MDT</p>
   </div>
 </div>
 
 <script>
 function toggleReport(btn) {
   const body = btn.nextElementSibling;
-  const arrow = btn.querySelector('.arrow');
   const isOpen = body.classList.contains('open');
   body.classList.toggle('open', !isOpen);
-  arrow.textContent = isOpen ? '▼' : '▲';
+  btn.textContent = isOpen ? '[+] VIEW FULL TYPED ANALYST REPORT (11 SECTIONS)' : '[-] HIDE FULL TYPED ANALYST REPORT';
 }
 </script>
 </body>

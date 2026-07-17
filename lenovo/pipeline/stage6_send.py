@@ -58,6 +58,15 @@ def run_stage6(today: date, html: str, match_count: int) -> bool:
         if not gmail_app_password:
             raise ValueError("GMAIL_APP_PASSWORD not found in environment variables")
 
+        # Always save a local copy of the compiled HTML briefing
+        try:
+            latest_path = os.path.join(config["pipeline"]["log_dir"], "latest_briefing.html")
+            with open(latest_path, "w") as f:
+                f.write(html)
+            log.info(f"Saved local briefing copy to {latest_path}")
+        except Exception as ex:
+            log.warning(f"Failed to save local copy of briefing: {ex}")
+
         log.info(f"Connecting to SMTP server {email_cfg['smtp_host']}:{email_cfg['smtp_port']}...")
         with smtplib.SMTP(email_cfg["smtp_host"], email_cfg["smtp_port"]) as smtp:
             smtp.starttls()

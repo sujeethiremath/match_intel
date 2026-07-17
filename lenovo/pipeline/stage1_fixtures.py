@@ -138,7 +138,23 @@ def run_stage1(today: date) -> bool:
             except Exception as e:
                 log.error(f"  Failed to upsert {fixture['team_a']} vs {fixture['team_b']}: {e}")
 
-        notes = f"intl={len(intl_fixtures)}, mlc={len(mlc_fixtures)}"
+        # --- FALLBACK TO SEARXNG DISCOVERY ---
+        if match_count == 0:
+            log.warning("No fixtures found via CricAPI. Falling back to SearXNG discovery...")
+            search_fixtures = discover_fixtures_via_search(today)
+            for fixture in search_fixtures:
+                try:
+                    f_dict = fixture if isinstance(fixture, dict) else fixture.dict()
+                    match_id = upsert_match(**f_dict)
+                    match_count += 1
+                    log.info(
+                        f"  [SearXNG Fallback] Upserted: {f_dict['team_a']} vs {f_dict['team_b']} "
+                        f"({f_dict['match_format']}, {f_dict['gender']}) -> id={match_id}"
+                    )
+                except Exception as e:
+                    log.error(f"  Failed to upsert search fixture {fixture}: {e}")
+
+        notes = f"intl={len(intl_fixtures)}, mlc={len(mlc_fixtures)} (fallback_used={match_count > 0 and len(all_fixtures) == 0})"
         log_stage_done(stage_id, match_count, notes)
         log.info(f"Stage 1 complete: {match_count} matches upserted")
         return True
@@ -147,3 +163,41 @@ def run_stage1(today: date) -> bool:
         log.error(f"Stage 1 failed: {e}")
         log_stage_failed(stage_id, str(e))
         return False
+
+
+def discover_fixtures_via_search(today: date) -> list:
+    """
+    Search SearXNG for matches on today's date, and call Mac Mini to parse them.
+    """
+    from scrapers.search_client import search
+    from utils.mac_mini_client import parse_fixtures
+    
+    date_str = today.strftime("%Y-%m-%d")
+    queries = [
+        f"cricket matches playing today {date_str}",
+        f"Major League Cricket matches today {date_str}",
+        f"international cricket matches today {date_str}"
+    ]
+    
+    combined_results = []
+    for query in queries:
+        log.info(f"Searching SearXNG for: '{query}'")
+        res = search(query, num_results=6)
+        if res:
+            combined_results.append(res)
+            
+    if not combined_results:
+        log.warning("No search results returned from SearXNG for today's matches.")
+        return []
+        
+    search_text = "\n\n=== NEXT QUERY RESULT ===\n\n".join(combined_results)
+    
+    log.info("Sending search snippets to Mac Mini for fixture parsing...")
+    parse_result = parse_fixtures(date_str, search_text)
+    if not parse_result or not parse_result.get("success"):
+        log.error(f"Failed to parse fixtures via Mac Mini: {parse_result.get('error') if parse_result else 'No response'}")
+        return []
+        
+    fixtures = parse_result.get("fixtures", [])
+    log.info(f"Mac Mini parsed {len(fixtures)} fixtures from search results")
+    return fixtures

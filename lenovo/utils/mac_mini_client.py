@@ -111,3 +111,23 @@ def analyze(payload_dict: dict, timeout_mins: int = None) -> dict | None:
     except Exception as e:
         log.error(f"Analysis failed: {e}")
         return None
+
+
+def parse_fixtures(date_str: str, search_results: str) -> dict | None:
+    """
+    Call Mac Mini /parse-fixtures endpoint to parse matches from search snippets.
+    """
+    payload = {
+        "date_str": date_str,
+        "search_results": search_results,
+    }
+    try:
+        with httpx.Client(timeout=None) as client:
+            resp = client.post(f"{BASE_URL}/parse-fixtures", json=payload)
+            resp.raise_for_status()
+            data = resp.json()
+            log.info("Parse fixtures call succeeded")
+            return data
+    except Exception as e:
+        log.error(f"Parse fixtures failed: {e}")
+        return None

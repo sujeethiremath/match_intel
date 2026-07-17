@@ -3,8 +3,10 @@ import uvicorn
 import logging
 from services.extractor import extract as run_extraction
 from services.analyzer import analyze as run_analysis
+from services.fixture_parser import parse_fixtures as run_fixture_parsing
 from models.extract import ExtractionRequest
 from models.analyze import AnalysisRequest, AnalysisResponse
+from models.fixture_parser import FixtureExtractionRequest, FixtureExtractionResponse
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -22,6 +24,10 @@ async def extract(request: ExtractionRequest):
 @app.post("/analyze", response_model=AnalysisResponse)
 async def analyze(request: AnalysisRequest):
     return await run_analysis(request)
+
+@app.post("/parse-fixtures", response_model=FixtureExtractionResponse)
+async def parse_fixtures(request: FixtureExtractionRequest):
+    return await run_fixture_parsing(request)
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="0.0.0.0", port=8001, reload=False)
