@@ -1,0 +1,41 @@
+name: CI Workflow
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  validate:
+    name: Code Syntax & Environment Validation
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+      - name: Verify Python Code Syntax
+        run: |
+          python -m py_compile lenovo/pipeline/*.py lenovo/scrapers/*.py lenovo/database/*.py lenovo/utils/*.py mac_mini_service/*.py
+
+      - name: Check Environment Examples & Secrets Prevention
+        run: |
+          test -f .env.example
+          test -f lenovo/.env.example
+          # Ensure no tracked .env files exist in repository
+          if git ls-files | grep -E '^(\.env|lenovo/\.env)$'; then
+            echo "ERROR: Tracked .env file detected in Git repository!"
+            exit 1
+          fi

@@ -4,12 +4,12 @@ pipeline:
   midnight_scrape_cron: "0 0 * * *"
   topup_scrape_cron: "0 6 * * *"
   email_send_cron: "0 8 * * *"
-  log_dir: /home/superman/match-intel/logs
+  log_dir: logs
   always_send_email: true
 
 email:
-  recipient: hiremath09@gmail.com
-  sender: mrguntherr@gmail.com
+  recipient: your_recipient@example.com
+  sender: your_sender@example.com
   subject_template: "🏏 Cricket Intelligence — {weekday}, {date} MDT"
   smtp_host: smtp.gmail.com
   smtp_port: 587
@@ -51,7 +51,7 @@ cricket:
         - Texas Super Kings
 
 mac_mini:
-  host: 10.0.0.17
+  host: localhost
   port: 8001
   extraction_model: mlx-community/Qwen2.5-14B-Instruct-4bit
   analysis_model: mlx-community/Qwen2.5-14B-Instruct-4bit

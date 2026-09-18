@@ -2,7 +2,8 @@ import sys
 import os
 from loguru import logger
 
-LOG_DIR = "/home/superman/match-intel/logs"
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+LOG_DIR = os.getenv("LOG_DIR", os.path.join(BASE_DIR, "logs"))
 os.makedirs(LOG_DIR, exist_ok=True)
 
 # Remove default handler

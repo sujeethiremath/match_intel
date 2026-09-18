@@ -1,4 +1,4 @@
-# Python
+# Python & Bytecode
 __pycache__/
 *.py[cod]
 *$py.class
@@ -33,12 +33,16 @@ venv.bak/
 # Environment Secrets
 .env
 .env.*
+!.env.example
+!.env.test.example
 
-# Logs
+# Logs & Temporary Files
 logs/
 *.log
+*.tmp
+*.temp
 
-# OS & IDE
+# OS & Editor Files
 .DS_Store
 .DS_Store?
 ._*
@@ -49,7 +53,10 @@ Thumbs.db
 .idea/
 .vscode/
 
-# Build archives
+# Database & Archives
+*.db
+*.sqlite
+*.sqlite3
 *.tar.gz
 *.zip
 *.tgz

@@ -21,9 +21,9 @@ with open(os.path.join(BASE_DIR, "config.yaml"), "r") as f:
 MAC_HOST = os.getenv("MAC_MINI_HOST", _cfg["mac_mini"]["host"])
 MAC_PORT = int(os.getenv("MAC_MINI_PORT", _cfg["mac_mini"]["port"]))
 
-# Mac Mini M4 primary Ethernet MAC address (en0)
-# Change this if you switch to a different network interface
-MAC_MINI_HARDWARE_MAC = os.getenv("MAC_MINI_MAC_ADDRESS", "1c:f6:4c:4b:e6:90")
+# Mac Mini primary Ethernet MAC address for WoL
+# Configure MAC_MINI_MAC_ADDRESS in your .env file
+MAC_MINI_HARDWARE_MAC = os.getenv("MAC_MINI_MAC_ADDRESS", "00:11:22:33:44:55")
 
 # Wake-up configuration
 WAKE_WAIT_SECS = 90       # Max seconds to wait after sending WoL packet
